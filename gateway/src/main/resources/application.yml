@@ -1,0 +1,47 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: gateway
+
+  security:
+    oauth2:
+      resourceserver:
+        opaquetoken:
+          introspection-uri: http://localhost:8080/realms/conference/protocol/openid-connect/token/introspect
+          client-id: private
+          client-secret: s3cret
+
+  cloud:
+    gateway:
+      routes:
+        - id: schedule-service
+          uri: http://localhost:8100
+          predicates:
+            - Path=/schedule/**
+          filters:
+            - TokenExchange
+        - id: registration-service
+          uri: http://localhost:8200
+          predicates:
+            - Path=/registrations/**
+          filters:
+            - TokenExchange
+
+token-exchange:
+  token-uri: http://localhost:8080/realms/conference/protocol/openid-connect/token
+  client-id: private
+  client-secret: s3cret
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

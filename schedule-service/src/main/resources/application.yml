@@ -1,0 +1,26 @@
+server:
+  port: 8100
+  servlet:
+    context-path: /schedule
+
+spring:
+  application:
+    name: schedule-service
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/conference
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

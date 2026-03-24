@@ -1,0 +1,141 @@
+{
+  "realm": "conference",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "roles": {
+    "realm": [
+      {
+        "name": "attendee",
+        "description": "Conference attendee — can browse talks and register for sessions"
+      },
+      {
+        "name": "organizer",
+        "description": "Conference organizer — full access"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "public",
+      "name": "Conference SPA (Public)",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:5174/*",
+        "http://localhost:4200/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:4200"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "use.refresh.tokens": "true",
+        "access.token.lifespan": "300"
+      },
+      "fullScopeAllowed": true
+    },
+    {
+      "clientId": "private",
+      "name": "Gateway (Confidential)",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "s3cret",
+      "serviceAccountsEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "standardFlowEnabled": false,
+      "protocol": "openid-connect",
+      "fullScopeAllowed": true,
+      "attributes": {
+        "use.refresh.tokens": "false",
+        "token.exchange.standard.flow.enabled": "true"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "alice",
+      "enabled": true,
+      "email": "alice@conference.dev",
+      "firstName": "Alice",
+      "lastName": "Johnson",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "alice",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "attendee"
+      ]
+    },
+    {
+      "username": "bob",
+      "enabled": true,
+      "email": "bob@conference.dev",
+      "firstName": "Bob",
+      "lastName": "Smith",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "bob",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "attendee",
+        "organizer"
+      ]
+    }
+  ],
+  "components": {
+    "org.keycloak.services.clientpolicy.executor": [],
+    "org.keycloak.services.clientpolicy.condition": []
+  },
+  "clientScopes": [
+    {
+      "name": "roles",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "false",
+        "display.on.consent.screen": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ],
+  "defaultDefaultClientScopes": [
+    "roles",
+    "profile",
+    "email"
+  ],
+  "identityProviders": [],
+  "identityProviderMappers": []
+}
