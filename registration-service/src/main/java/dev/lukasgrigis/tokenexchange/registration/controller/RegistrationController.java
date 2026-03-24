@@ -2,9 +2,12 @@ package dev.lukasgrigis.tokenexchange.registration.controller;
 
 import dev.lukasgrigis.tokenexchange.registration.model.Registration;
 import dev.lukasgrigis.tokenexchange.registration.model.RegistrationRequest;
+import dev.lukasgrigis.tokenexchange.registration.openapi.SecurityRequirementName;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,15 +24,20 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 @RestController
+@Tag(name = "Registration API")
 public class RegistrationController {
 
     private final ConcurrentMap<UUID, Registration> registrations = new ConcurrentHashMap<>();
 
+    @Operation(
+            summary = "Register for a talk",
+            security = @SecurityRequirement(name = SecurityRequirementName.OIDC)
+    )
     @PostMapping
     @PreAuthorize("hasAnyRole('ATTENDEE', 'ORGANIZER')")
     public ResponseEntity<Registration> register(
             @RequestBody RegistrationRequest request,
-            @AuthenticationPrincipal JwtAuthenticationToken auth) {
+            JwtAuthenticationToken auth) {
 
         String userId = auth.getToken().getSubject();
         UUID id = UUID.randomUUID();
@@ -41,19 +49,27 @@ public class RegistrationController {
             .body(registration);
     }
 
+    @Operation(
+            summary = "List my registrations",
+            security = @SecurityRequirement(name = SecurityRequirementName.OIDC)
+    )
     @GetMapping("/mine")
-    public List<Registration> getMyRegistrations(@AuthenticationPrincipal JwtAuthenticationToken auth) {
+    public List<Registration> getMyRegistrations(JwtAuthenticationToken auth) {
         String userId = auth.getToken().getSubject();
         return registrations.values().stream()
             .filter(r -> r.userId().equals(userId))
             .toList();
     }
 
+    @Operation(
+            summary = "Cancel a registration",
+            security = @SecurityRequirement(name = SecurityRequirementName.OIDC)
+    )
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ATTENDEE', 'ORGANIZER')")
     public ResponseEntity<Void> deleteRegistration(
             @PathVariable UUID id,
-            @AuthenticationPrincipal JwtAuthenticationToken auth) {
+            JwtAuthenticationToken auth) {
 
         Registration registration = registrations.get(id);
         if (registration == null) {

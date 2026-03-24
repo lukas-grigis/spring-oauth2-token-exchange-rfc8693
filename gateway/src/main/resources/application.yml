@@ -5,19 +5,51 @@ spring:
   application:
     name: gateway
 
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowed-origin-patterns: "*"
+                allowed-methods: "*"
+                allowed-headers: "*"
+                allow-credentials: true
+          routes:
+            - id: schedule-service
+              uri: http://localhost:8100
+              predicates:
+                - Path=/schedule/**
+              filters:
+                - AddRequestHeader=X-Gateway-Passed,true
+                - AddRequestHeader=X-Forwarded-Proto,http
+                - AddRequestHeader=X-Forwarded-Host,localhost
+                - AddRequestHeader=X-Forwarded-Port,8000
+                - TokenRelay=keycloak
+            - id: registration-service
+              uri: http://localhost:8200
+              predicates:
+                - Path=/registrations/**
+              filters:
+                - AddRequestHeader=X-Gateway-Passed,true
+                - AddRequestHeader=X-Forwarded-Proto,http
+                - AddRequestHeader=X-Forwarded-Host,localhost
+                - AddRequestHeader=X-Forwarded-Port,8000
+                - TokenRelay=keycloak
   security:
     oauth2:
       resourceserver:
         opaquetoken:
-          introspection-uri: http://localhost:8080/realms/conference/protocol/openid-connect/token/introspect
-          client-id: private
-          client-secret: s3cret
+          introspection-uri: "http://localhost:8080/realms/conference/protocol/openid-connect/token/introspect"
+          client-id: "private"
+          client-secret: "s3cret"
       client:
         registration:
           keycloak:
             provider: keycloak
             client-id: private
-            client-secret: s3cret
+            client-secret: "s3cret"
             authorization-grant-type: urn:ietf:params:oauth:grant-type:token-exchange
             scope:
               - openid
@@ -27,32 +59,60 @@ spring:
           keycloak:
             issuer-uri: http://localhost:8080/realms/conference
 
-  cloud:
-    gateway:
-      server:
-        webflux:
-          routes:
-            - id: schedule-service
-              uri: http://localhost:8100
-              predicates:
-                - Path=/schedule/**
-              filters:
-                - TokenRelay=keycloak
-            - id: registration-service
-              uri: http://localhost:8200
-              predicates:
-                - Path=/registrations/**
-              filters:
-                - TokenRelay=keycloak
+app:
+  openapi:
+    version: "@project.version@"
+    well-known-oidc-configuration-url: "http://localhost:8080/realms/conference/.well-known/openid-configuration"
+
+  security:
+    unprotected-paths:
+      # Gateway
+      - "/api-docs"
+      - "/api-docs/**"
+      - "/swagger-ui"
+      - "/swagger-ui/**"
+      - "/actuator/health"
+
+      # Schedule Service
+      - "/schedule/api-docs"
+      - "/schedule/api-docs/**"
+      - "/schedule/swagger-ui"
+      - "/schedule/swagger-ui/**"
+
+      # Registration Service
+      - "/registrations/api-docs"
+      - "/registrations/api-docs/**"
+      - "/registrations/swagger-ui"
+      - "/registrations/swagger-ui/**"
 
 springdoc:
   api-docs:
-    path: /v3/api-docs
+    enabled: true
+    path: "/api-docs"
   swagger-ui:
-    path: /swagger-ui.html
+    enabled: true
+    path: "/swagger-ui"
+    tags-sorter: "alpha"
+    operations-sorter: "alpha"
+    oauth:
+      client-id: "public"
+      use-pkce-with-authorization-code-grant: true
+      scopes:
+        - "openid"
+        - "profile"
+        - "email"
+    urls:
+      - name: "gateway"
+        display-name: "Gateway"
+        url: "http://localhost:8000/api-docs"
+      - name: "schedule-service"
+        display-name: "Schedule Service"
+        url: "http://localhost:8000/schedule/api-docs"
+      - name: "registration-service"
+        display-name: "Registration Service"
+        url: "http://localhost:8000/registrations/api-docs"
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG

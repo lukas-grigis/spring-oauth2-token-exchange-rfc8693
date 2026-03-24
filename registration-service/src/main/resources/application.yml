@@ -1,26 +1,49 @@
 server:
   port: 8200
+  forward-headers-strategy: framework
   servlet:
-    context-path: /registrations
+    context-path: "/registrations"
 
 spring:
   application:
     name: registration-service
-
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/realms/conference
+          issuer-uri: "http://localhost:8080/realms/conference"
+
+app:
+  openapi:
+    version: "@project.version@"
+    well-known-oidc-configuration-url: "http://localhost:8080/realms/conference/.well-known/openid-configuration"
+
+  security:
+    unprotected-paths:
+      - "/api-docs**"
+      - "/api-docs/**"
+      - "/swagger-ui**"
+      - "/swagger-ui/**"
+      - "/actuator/health"
 
 springdoc:
   api-docs:
-    path: /v3/api-docs
+    enabled: true
+    path: "/api-docs"
   swagger-ui:
-    path: /swagger-ui.html
+    enabled: true
+    path: "/swagger-ui"
+    tags-sorter: "alpha"
+    operations-sorter: "alpha"
+    oauth:
+      client-id: "public"
+      use-pkce-with-authorization-code-grant: true
+      scopes:
+        - "openid"
+        - "profile"
+        - "email"
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
