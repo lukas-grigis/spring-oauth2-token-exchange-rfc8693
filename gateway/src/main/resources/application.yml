@@ -12,27 +12,38 @@ spring:
           introspection-uri: http://localhost:8080/realms/conference/protocol/openid-connect/token/introspect
           client-id: private
           client-secret: s3cret
+      client:
+        registration:
+          keycloak:
+            provider: keycloak
+            client-id: private
+            client-secret: s3cret
+            authorization-grant-type: urn:ietf:params:oauth:grant-type:token-exchange
+            scope:
+              - openid
+              - profile
+              - email
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8080/realms/conference
 
   cloud:
     gateway:
-      routes:
-        - id: schedule-service
-          uri: http://localhost:8100
-          predicates:
-            - Path=/schedule/**
-          filters:
-            - TokenExchange
-        - id: registration-service
-          uri: http://localhost:8200
-          predicates:
-            - Path=/registrations/**
-          filters:
-            - TokenExchange
-
-token-exchange:
-  token-uri: http://localhost:8080/realms/conference/protocol/openid-connect/token
-  client-id: private
-  client-secret: s3cret
+      server:
+        webflux:
+          routes:
+            - id: schedule-service
+              uri: http://localhost:8100
+              predicates:
+                - Path=/schedule/**
+              filters:
+                - TokenRelay=keycloak
+            - id: registration-service
+              uri: http://localhost:8200
+              predicates:
+                - Path=/registrations/**
+              filters:
+                - TokenRelay=keycloak
 
 springdoc:
   api-docs:
