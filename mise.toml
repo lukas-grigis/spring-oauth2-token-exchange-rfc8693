@@ -1,0 +1,182 @@
+[tools]
+java = "25"
+maven = "3"
+node = "24"
+npm = "10"
+
+# ─── Build ───────────────────────────────────────────────────────────
+
+[tasks.build]
+description = "Build all modules and download OTel agent"
+run = "mvn clean install -DskipTests"
+
+[tasks.test]
+description = "Run all tests"
+run = "mvn clean verify"
+
+# ─── Individual services ─────────────────────────────────────────────
+
+[tasks."registry:start"]
+description = "Start Eureka registry (port 8700)"
+dir = "registry"
+run = "mise x --env registry -- mvn spring-boot:run"
+
+[tasks."gateway:start"]
+description = "Start Gateway (port 8000)"
+dir = "gateway"
+run = "mise x --env gateway -- mvn spring-boot:run"
+
+[tasks."talk-service:start"]
+description = "Start Talk Service (port 8100)"
+dir = "talk-service"
+run = "mise x --env talk-service -- mvn spring-boot:run"
+
+[tasks."review-service:start"]
+description = "Start Review Service (port 8200)"
+dir = "review-service"
+run = "mise x --env review-service -- mvn spring-boot:run"
+
+# ─── Demo ────────────────────────────────────────────────────────────
+
+[tasks.demo]
+description = "One-click demo: install, start, and run everything. Ctrl+C to stop."
+run = """
+#!/usr/bin/env bash
+set -e
+ROOT="$(pwd)"
+PIDS=()
+
+cleanup() {
+  echo ""
+  echo "==> Shutting down..."
+  for pid in "${PIDS[@]}"; do
+    kill "$pid" 2>/dev/null || true
+  done
+  wait 2>/dev/null
+  (cd "$ROOT/support" && docker compose down) 2>/dev/null
+  echo "==> Stopped."
+  exit 0
+}
+trap cleanup INT TERM
+
+# ── Phase 1: Install everything ───────────────────────────────────
+
+echo "==> [1/5] Installing frontend dependencies (background)..."
+(cd "$ROOT/frontend-angular" && npm install --silent 2>/dev/null) &
+FE_PID1=$!
+(cd "$ROOT/frontend-vue" && npm install --silent 2>/dev/null) &
+FE_PID2=$!
+(cd "$ROOT/frontend-react" && npm install --silent 2>/dev/null) &
+FE_PID3=$!
+
+echo "==> [2/5] Building project and downloading OTel agent..."
+mvn clean install -DskipTests -q
+
+echo "==> [3/5] Starting Docker infrastructure..."
+(cd "$ROOT/support" && docker compose up -d --quiet-pull)
+
+echo "         Waiting for Keycloak..."
+until curl -sf http://localhost/auth/realms/master > /dev/null 2>&1; do sleep 2; done
+
+echo "         Disabling SSL on master realm (dev only)..."
+docker exec conference-database-1 psql -U admin -d keycloak \
+  -c "UPDATE realm SET ssl_required = 'NONE' WHERE name = 'master';" > /dev/null 2>&1
+docker restart conference-keycloak-1 > /dev/null 2>&1
+until curl -sf http://localhost/auth/realms/master > /dev/null 2>&1; do sleep 2; done
+
+echo "         Setting up Keycloak realm..."
+(cd "$ROOT/support/keycloak" && npm install --silent 2>/dev/null && npm run setup)
+
+# ── Phase 2: Start services ──────────────────────────────────────
+
+echo "==> [4/5] Starting backend services..."
+mkdir -p "$ROOT/.logs"
+
+(cd "$ROOT/registry" && mise x --env registry -- mvn spring-boot:run) > "$ROOT/.logs/registry.log" 2>&1 &
+PIDS+=($!)
+
+echo "         Waiting for registry..."
+until curl -sf http://localhost:8700/eureka/apps > /dev/null 2>&1; do sleep 2; done
+
+(cd "$ROOT/gateway" && mise x --env gateway -- mvn spring-boot:run) > "$ROOT/.logs/gateway.log" 2>&1 &
+PIDS+=($!)
+(cd "$ROOT/talk-service" && mise x --env talk-service -- mvn spring-boot:run) > "$ROOT/.logs/talk-service.log" 2>&1 &
+PIDS+=($!)
+(cd "$ROOT/review-service" && mise x --env review-service -- mvn spring-boot:run) > "$ROOT/.logs/review-service.log" 2>&1 &
+PIDS+=($!)
+
+echo "         Waiting for gateway..."
+until curl -sf http://localhost:8000/actuator/health > /dev/null 2>&1; do sleep 2; done
+
+echo "==> [5/5] Starting frontends..."
+echo "         Waiting for frontend installs to finish..."
+wait $FE_PID1 $FE_PID2 $FE_PID3
+
+echo "         Launching dev servers..."
+(cd "$ROOT/frontend-angular" && npm start) > "$ROOT/.logs/frontend-angular.log" 2>&1 &
+PIDS+=($!)
+(cd "$ROOT/frontend-vue" && npm start) > "$ROOT/.logs/frontend-vue.log" 2>&1 &
+PIDS+=($!)
+(cd "$ROOT/frontend-react" && npm start) > "$ROOT/.logs/frontend-react.log" 2>&1 &
+PIDS+=($!)
+
+echo ""
+echo "==> Demo is running!"
+echo ""
+echo "    Frontends"
+echo "      Angular:        http://localhost:4200"
+echo "      Vue:            http://localhost:5173"
+echo "      React:          http://localhost:5174"
+echo ""
+echo "    Backend"
+echo "      Gateway:        http://localhost:8000"
+echo "      Talk Service:   http://localhost:8100"
+echo "      Review Service: http://localhost:8200"
+echo ""
+echo "    Infrastructure"
+echo "      Keycloak:       http://localhost/auth"
+echo "      Grafana:        http://grafana.localhost"
+echo "      Swagger UI:     http://localhost:8000/swagger-ui"
+echo ""
+echo "    Logs:  tail -f .logs/{gateway,talk-service,frontend-angular,...}.log"
+echo ""
+echo "    Press Ctrl+C to stop everything"
+echo ""
+wait
+"""
+
+# ─── Frontends ───────────────────────────────────────────────────────
+
+[tasks."frontend:angular:install"]
+description = "Install Angular frontend dependencies"
+dir = "frontend-angular"
+run = "npm install"
+
+[tasks."frontend:angular:start"]
+description = "Start Angular frontend (port 4200)"
+dir = "frontend-angular"
+run = "npm start"
+
+[tasks."frontend:vue:install"]
+description = "Install Vue frontend dependencies"
+dir = "frontend-vue"
+run = "npm install"
+
+[tasks."frontend:vue:start"]
+description = "Start Vue frontend (port 5173)"
+dir = "frontend-vue"
+run = "npm start"
+
+[tasks."frontend:react:install"]
+description = "Install React frontend dependencies"
+dir = "frontend-react"
+run = "npm install"
+
+[tasks."frontend:react:start"]
+description = "Start React frontend (port 5174)"
+dir = "frontend-react"
+run = "npm start"
+
+[tasks."frontend:install"]
+description = "Install all frontend dependencies"
+depends = ["frontend:angular:install", "frontend:vue:install", "frontend:react:install"]

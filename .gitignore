@@ -1,0 +1,47 @@
+### Java / Maven ###
+target/
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### Eclipse ###
+.classpath
+.factorypath
+.project
+.settings/
+
+### STS ###
+.apt_generated
+.springBeans
+.sts4-cache
+
+### VS Code ###
+.vscode/
+
+### Node ###
+node_modules/
+
+### Angular ###
+.angular/
+
+### Frontend builds ###
+frontend-*/dist/
+
+### Generated API clients ###
+frontend-angular/src/app/api/*/gen/
+frontend-vue/src/api/generated/
+frontend-react/src/api/generated/
+
+### Runtime logs ###
+.logs/
+
+### OS files ###
+.DS_Store
+Thumbs.db
+
+### Environment ###
+.env.local
+.env.*.local
