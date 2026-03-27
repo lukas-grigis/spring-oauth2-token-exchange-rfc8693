@@ -1,0 +1,45 @@
+{
+  "name": "frontend-angular",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve --proxy-config proxy.conf.json",
+    "build": "ng build",
+    "api:generate:gateway": "ng-openapi-gen -c src/app/api/gateway/.openapi-generator-gateway.json",
+    "api:generate:talk": "ng-openapi-gen -c src/app/api/talk-service/.openapi-generator-talk-service.json",
+    "api:generate:review": "ng-openapi-gen -c src/app/api/review-service/.openapi-generator-review-service.json",
+    "api:generate": "npm run api:generate:gateway && npm run api:generate:talk && npm run api:generate:review",
+    "format": "prettier --write src",
+    "format:check": "prettier --check src",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@angular/animations": "^21.0.0",
+    "@angular/common": "^21.0.0",
+    "@angular/compiler": "^21.0.0",
+    "@angular/core": "^21.0.0",
+    "@angular/forms": "^21.0.0",
+    "@angular/platform-browser": "^21.0.0",
+    "@angular/platform-browser-dynamic": "^21.0.0",
+    "@angular/router": "^21.0.0",
+    "keycloak-js": "^26.2.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.8.0",
+    "zone.js": "~0.16.1"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.0.0",
+    "@angular/cli": "^21.0.0",
+    "@angular/compiler-cli": "^21.0.0",
+    "@tailwindcss/postcss": "^4.1.0",
+    "angular-eslint": "^21.3.1",
+    "eslint": "^10.1.0",
+    "lint-staged": "^16.4.0",
+    "ng-openapi-gen": "^1.0.5",
+    "postcss": "^8.5.0",
+    "prettier": "^3.8.1",
+    "tailwindcss": "^4.1.0",
+    "typescript": "~5.9.0"
+  }
+}
