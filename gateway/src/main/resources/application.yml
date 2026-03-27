@@ -1,0 +1,121 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowed-origin-patterns: "*"
+                allowed-methods: "*"
+                allowed-headers: "*"
+                allow-credentials: true
+          default-filters:
+            - AddRequestHeader=X-Gateway-Passed,true
+            - AddRequestHeader=X-Forwarded-Proto,http
+            - AddRequestHeader=X-Forwarded-Host,localhost
+            - AddRequestHeader=X-Forwarded-Port,8000
+            - TokenRelay=keycloak
+          routes:
+            - id: talk-service
+              uri: lb://talk-service
+              predicates:
+                - Path=/talk-service/**
+            - id: review-service
+              uri: lb://review-service
+              predicates:
+                - Path=/review-service/**
+  security:
+    oauth2:
+      resourceserver:
+        opaquetoken:
+          introspection-uri: "http://localhost/auth/realms/conference/protocol/openid-connect/token/introspect"
+          client-id: "private"
+          client-secret: "knZMUYRIU3YC2CGZpyF8HiBdEfKzu1WD"
+      client:
+        registration:
+          keycloak:
+            provider: keycloak
+            client-id: private
+            client-secret: "knZMUYRIU3YC2CGZpyF8HiBdEfKzu1WD"
+            authorization-grant-type: urn:ietf:params:oauth:grant-type:token-exchange
+            scope:
+              - openid
+              - profile
+              - email
+        provider:
+          keycloak:
+            issuer-uri: http://localhost/auth/realms/conference
+
+app:
+  openapi:
+    version: "@project.version@"
+    well-known-oidc-configuration-url: "http://localhost/auth/realms/conference/.well-known/openid-configuration"
+
+  security:
+    unprotected-paths:
+      # Gateway
+      - "/api-docs"
+      - "/api-docs/**"
+      - "/swagger-ui"
+      - "/swagger-ui/**"
+      - "/actuator/health"
+
+      # Talk Service
+      - "/talk-service/api-docs"
+      - "/talk-service/api-docs/**"
+      - "/talk-service/swagger-ui"
+      - "/talk-service/swagger-ui/**"
+
+      # Review Service
+      - "/review-service/api-docs"
+      - "/review-service/api-docs/**"
+      - "/review-service/swagger-ui"
+      - "/review-service/swagger-ui/**"
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: "/api-docs"
+  swagger-ui:
+    enabled: true
+    path: "/swagger-ui"
+    tags-sorter: "alpha"
+    operations-sorter: "alpha"
+    oauth:
+      client-id: "public"
+      use-pkce-with-authorization-code-grant: true
+      scopes:
+        - "openid"
+        - "profile"
+        - "email"
+    urls:
+      - name: "gateway"
+        display-name: "Gateway"
+        url: "http://localhost:8000/api-docs"
+      - name: "talk-service"
+        display-name: "Talk Service"
+        url: "http://localhost:8000/talk-service/api-docs"
+      - name: "review-service"
+        display-name: "Review Service"
+        url: "http://localhost:8000/review-service/api-docs"
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    serviceUrl:
+      defaultZone: http://localhost:8700/eureka/
+  instance:
+    prefer-ip-address: true
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG

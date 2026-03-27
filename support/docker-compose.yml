@@ -1,0 +1,116 @@
+name: conference
+
+services:
+  traefik:
+    image: "${TRAEFIK_IMAGE}"
+    restart: "unless-stopped"
+
+    command:
+      - "--log.format=common"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--metrics.otlp=true"
+      - "--metrics.otlp.grpc=true"
+      - "--metrics.otlp.grpc.endpoint=otel-collector:4317"
+      - "--metrics.otlp.grpc.insecure=true"
+      - "--tracing=true"
+      - "--tracing.otlp.grpc=true"
+      - "--tracing.otlp.grpc.endpoint=otel-collector:4317"
+      - "--tracing.otlp.grpc.insecure=true"
+      - "--experimental.otlpLogs=true"
+      - "--log.otlp.grpc=true"
+      - "--log.otlp.grpc.endpoint=otel-collector:4317"
+      - "--log.otlp.grpc.insecure=true"
+
+      # Endpoint (HTTP)
+      - "--entrypoints.web.address=:${WEB_PORT}"
+      - "--log.level=DEBUG"
+
+    ports:
+      - "${WEB_PORT}:${WEB_PORT}"
+
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+    env_file:
+      - "traefik/.env"
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`edge.localhost`)"
+      - "traefik.http.routers.traefik.entrypoints=web"
+      - "traefik.http.routers.traefik.service=traefik"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+
+  otel-collector:
+    image: "${OTEL_COLLECTOR_IMAGE}"
+    restart: "unless-stopped"
+
+    volumes:
+      - "./otel-collector/config.yml:/etc/otelcol-contrib/config.yaml:ro"
+
+    ports:
+      - "${OTEL_GRPC_PORT}:4317"
+      - "${OTEL_HTTP_PORT}:4318"
+
+  lgtm:
+    image: "${GRAFANA_LGTM}"
+    restart: "unless-stopped"
+
+    depends_on:
+      - "traefik"
+      - "otel-collector"
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.localhost`)"
+      - "traefik.http.routers.grafana.entrypoints=web"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+
+  database:
+    image: "${POSTGRES_IMAGE}"
+    restart: "unless-stopped"
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    shm_size: '128m'
+
+    env_file:
+      - "database/.env"
+
+    volumes:
+      - "database-data:/var/lib/postgresql"
+      - "./database/init-scripts:/docker-entrypoint-initdb.d:ro"
+
+    ports:
+      - "${DATABASE_PORT}:5432"
+
+  keycloak:
+    image: "${KEYCLOAK_IMAGE}"
+    restart: "unless-stopped"
+
+    depends_on:
+      - "traefik"
+      - "database"
+      - "otel-collector"
+
+    env_file:
+      - "keycloak/.env"
+
+    command:
+      - "start-dev"
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.keycloak.rule=PathPrefix(`/auth`)"
+      - "traefik.http.routers.keycloak.entrypoints=web"
+      - "traefik.http.routers.keycloak.service=keycloak"
+      - "traefik.http.services.keycloak.loadbalancer.server.port=8080"
+
+volumes:
+  database-data: { }

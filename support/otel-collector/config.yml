@@ -1,0 +1,47 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch: { }
+  filter/drop-internal-http:
+    error_mode: ignore
+    traces:
+      span:
+        - 'attributes["server.address"] == "grafana.localhost"'
+        - 'attributes["server.address"] == "edge.localhost"'
+        - 'attributes["server.address"] == "/var/run/docker.sock"'
+
+exporters:
+  otlp/lgtm:
+    endpoint: lgtm:4317
+    tls:
+      insecure: true
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  pprof:
+    endpoint: 0.0.0.0:1777
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+service:
+  extensions: [ health_check, pprof, zpages ]
+  pipelines:
+    traces:
+      receivers: [ otlp ]
+      processors: [ filter/drop-internal-http, batch ]
+      exporters: [ otlp/lgtm ]
+    metrics:
+      receivers: [ otlp ]
+      processors: [ batch ]
+      exporters: [ otlp/lgtm ]
+    logs:
+      receivers: [ otlp ]
+      processors: [ batch ]
+      exporters: [ otlp/lgtm ]

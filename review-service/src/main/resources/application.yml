@@ -1,0 +1,58 @@
+server:
+  port: 8200
+  forward-headers-strategy: framework
+  servlet:
+    context-path: "/review-service"
+
+spring:
+  application:
+    name: review-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "http://localhost/auth/realms/conference"
+
+app:
+  openapi:
+    version: "@project.version@"
+    well-known-oidc-configuration-url: "http://localhost/auth/realms/conference/.well-known/openid-configuration"
+
+  security:
+    unprotected-paths:
+      - "/api-docs**"
+      - "/api-docs/**"
+      - "/swagger-ui**"
+      - "/swagger-ui/**"
+      - "/actuator/health"
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: "/api-docs"
+  swagger-ui:
+    enabled: true
+    path: "/swagger-ui"
+    tags-sorter: "alpha"
+    operations-sorter: "alpha"
+    oauth:
+      client-id: "public"
+      use-pkce-with-authorization-code-grant: true
+      scopes:
+        - "openid"
+        - "profile"
+        - "email"
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: false
+    serviceUrl:
+      defaultZone: http://localhost:8700/eureka/
+  instance:
+    prefer-ip-address: true
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
