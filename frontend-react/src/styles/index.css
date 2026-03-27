@@ -1,0 +1,125 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --color-reactor-50: #ecfeff;
+  --color-reactor-100: #cffafe;
+  --color-reactor-200: #a5f3fc;
+  --color-reactor-300: #67e8f9;
+  --color-reactor-400: #22d3ee;
+  --color-reactor-500: #06b6d4;
+  --color-reactor-600: #0891b2;
+  --color-reactor-700: #0e7490;
+  --color-reactor-800: #155e75;
+  --color-reactor-900: #164e63;
+  --color-reactor-950: #083344;
+
+  --color-deep-50: #f8fafc;
+  --color-deep-100: #e1e5eb;
+  --color-deep-200: #c3c9d2;
+  --color-deep-300: #9ba3b0;
+  --color-deep-400: #747d8c;
+  --color-deep-500: #5a6373;
+  --color-deep-600: #484f5d;
+  --color-deep-700: #3b404c;
+  --color-deep-800: #30333d;
+  --color-deep-900: #17181d;
+  --color-deep-950: #0b0b0e;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background: var(--color-deep-950);
+  color: var(--color-deep-100);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-deep-700);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-reactor-700);
+}
+
+@keyframes orbit-1 {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbit-2 {
+  from {
+    transform: rotate(120deg);
+  }
+  to {
+    transform: rotate(480deg);
+  }
+}
+
+@keyframes orbit-3 {
+  from {
+    transform: rotate(240deg);
+  }
+  to {
+    transform: rotate(600deg);
+  }
+}
+
+@keyframes core-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes float-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes reactor-glow {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
