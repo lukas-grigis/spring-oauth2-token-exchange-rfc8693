@@ -1,0 +1,34 @@
+{
+  "name": "frontend-vue",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "start": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "api:generate": "openapi-ts -i http://localhost:8000/api-docs -o src/api/generated/gateway && openapi-ts -i http://localhost:8000/talk-service/api-docs -o src/api/generated/talk-service && openapi-ts -i http://localhost:8000/review-service/api-docs -o src/api/generated/review-service",
+    "format": "prettier --write src",
+    "format:check": "prettier --check src",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "keycloak-js": "^26.2.0",
+    "vue": "^3.5.0",
+    "vue-router": "^5.0.4"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.94.5",
+    "@tailwindcss/vite": "^4.1.0",
+    "@vitejs/plugin-vue": "^6.0.5",
+    "eslint": "^10.1.0",
+    "eslint-plugin-vue": "^10.8.0",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.1",
+    "tailwindcss": "^4.1.0",
+    "typescript": "~5.9.0",
+    "vite": "^8.0.3",
+    "vue-tsc": "^3.2.6"
+  }
+}
