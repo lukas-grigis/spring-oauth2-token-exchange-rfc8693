@@ -1,0 +1,12 @@
+[env]
+JAVA_TOOL_OPTIONS = "-javaagent:target/opentelemetry-javaagent.jar"
+
+OTEL_SERVICE_NAME = "talk-service"
+OTEL_EXPORTER_OTLP_PROTOCOL = "grpc"
+OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:4317"
+OTEL_METRICS_EXPORTER = "otlp"
+OTEL_TRACES_EXPORTER = "otlp"
+OTEL_TRACES_SAMPLER = "parentbased_traceidratio"
+OTEL_TRACES_SAMPLER_ARG = "1.0"
+OTEL_INSTRUMENTATION_HTTP_SERVER_IGNORE_REQUESTS = "regex:/actuator/.*,regex:/health,regex:/favicon\\.ico"
+OTEL_RESOURCE_ATTRIBUTES = "service.name=talk-service,service.namespace=conference,deployment.environment=local"
