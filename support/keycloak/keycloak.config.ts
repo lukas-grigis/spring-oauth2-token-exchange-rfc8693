@@ -4,7 +4,7 @@ const config: Config = {
     keycloak: {
         url: "http://localhost/auth",
         adminUser: "admin",
-        adminPassword: "admin",
+        adminPassword: "admin", // demo only — use environment variables or a secrets manager in production
     },
 
     realm: "conference",
@@ -15,8 +15,12 @@ const config: Config = {
         },
         private: {
             clientId: "private",
-            secret: "knZMUYRIU3YC2CGZpyF8HiBdEfKzu1WD",
+            secret: "knZMUYRIU3YC2CGZpyF8HiBdEfKzu1WD", // demo only — use environment variables or a secrets manager in production
         },
+        audienceTargets: [
+            {clientId: "talk-service", secret: "talkServiceSecret8x7K2mPq"}, // demo only — use environment variables or a secrets manager in production
+            {clientId: "review-service", secret: "reviewServiceSecret4nR9wLjY"}, // demo only — use environment variables or a secrets manager in production
+        ],
     },
 
     roles: ["speaker", "reviewer"],

@@ -154,8 +154,28 @@ async function main() {
     await kc.clients.update({id: privFound.id!}, privateClientConfig);
     console.log(`   ${priv.clientId} — synced.`);
 
-    // 5. Users — create if missing, then sync roles
-    console.log(`\n5. Users`);
+    // 5. Audience target clients — create if missing
+    const audienceTargets = clients.audienceTargets;
+    console.log(`\n5. Audience targets: [${audienceTargets.map(t => t.clientId).join(", ")}]`);
+    for (const target of audienceTargets) {
+        const targetClientConfig = {
+            clientId: target.clientId,
+            enabled: true,
+            publicClient: false,
+            clientAuthenticatorType: "client-secret",
+            secret: target.secret,
+            standardFlowEnabled: false,
+            directAccessGrantsEnabled: false,
+            protocol: "openid-connect" as const,
+        };
+        await ensureCreated(target.clientId, () => kc.clients.create(targetClientConfig));
+        const [found] = await kc.clients.find({clientId: target.clientId});
+        await kc.clients.update({id: found.id!}, targetClientConfig);
+        console.log(`   ${target.clientId} — synced.`);
+    }
+
+    // 6. Users — create if missing, then sync roles
+    console.log(`\n6. Users`);
     for (const u of users) {
         console.log(`   ${u.username} (${u.email}) → [${u.roles.join(", ")}]`);
 
@@ -187,6 +207,9 @@ async function main() {
     console.log(`Realm:   ${realm}`);
     console.log(`Public:  ${pub.clientId} (PKCE S256, lightweight, audience → ${priv.clientId})`);
     console.log(`Private: ${priv.clientId} (secret: ${priv.secret}, token exchange enabled)`);
+    for (const target of audienceTargets) {
+        console.log(`Target:  ${target.clientId} (audience target for token exchange)`);
+    }
     for (const u of users) {
         console.log(`User:    ${u.username} / ${u.password} → [${u.roles.join(", ")}]`);
     }

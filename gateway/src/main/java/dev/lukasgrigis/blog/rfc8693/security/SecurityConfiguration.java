@@ -9,8 +9,10 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.client.TokenExchangeReactiveOAuth2AuthorizedClientProvider;
+import org.springframework.security.oauth2.client.endpoint.WebClientReactiveTokenExchangeTokenResponseClient;
 import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthentication;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.validation.annotation.Validated;
 import reactor.core.publisher.Mono;
 
@@ -47,7 +49,15 @@ public class SecurityConfiguration {
 
     @Bean
     TokenExchangeReactiveOAuth2AuthorizedClientProvider tokenExchangeReactiveOAuth2AuthorizedClientProvider() {
+        final var tokenResponseClient = new WebClientReactiveTokenExchangeTokenResponseClient();
+        tokenResponseClient.addParametersConverter(grantRequest -> {
+            final var params = new LinkedMultiValueMap<String, String>();
+            params.add("audience", grantRequest.getClientRegistration().getRegistrationId());
+            return params;
+        });
+
         final var provider = new TokenExchangeReactiveOAuth2AuthorizedClientProvider();
+        provider.setAccessTokenResponseClient(tokenResponseClient);
         provider.setSubjectTokenResolver(context ->
                 Mono.justOrEmpty(context.getPrincipal())
                         .ofType(BearerTokenAuthentication.class)

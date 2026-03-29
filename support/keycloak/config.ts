@@ -33,6 +33,13 @@ export const configSchema = z.object({
                     secret: z.string().default("knZMUYRIU3YC2CGZpyF8HiBdEfKzu1WD"),
                 })
                 .default({}),
+            audienceTargets: z.array(z.object({
+                clientId: z.string(),
+                secret: z.string(),
+            })).default([
+                {clientId: "talk-service", secret: "talkServiceSecret8x7K2mPq"},
+                {clientId: "review-service", secret: "reviewServiceSecret4nR9wLjY"},
+            ]),
         })
         .default({}),
 

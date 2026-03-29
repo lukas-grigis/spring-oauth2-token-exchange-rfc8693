@@ -21,29 +21,41 @@ spring:
             - AddRequestHeader=X-Forwarded-Proto,http
             - AddRequestHeader=X-Forwarded-Host,localhost
             - AddRequestHeader=X-Forwarded-Port,8000
-            - TokenRelay=keycloak
           routes:
             - id: talk-service
               uri: lb://talk-service
               predicates:
                 - Path=/talk-service/**
+              filters:
+                - TokenRelay=talk-service
             - id: review-service
               uri: lb://review-service
               predicates:
                 - Path=/review-service/**
+              filters:
+                - TokenRelay=review-service
   security:
     oauth2:
       resourceserver:
         opaquetoken:
           introspection-uri: "http://localhost/auth/realms/conference/protocol/openid-connect/token/introspect"
           client-id: "private"
-          client-secret: "knZMUYRIU3YC2CGZpyF8HiBdEfKzu1WD"
+          client-secret: "knZMUYRIU3YC2CGZpyF8HiBdEfKzu1WD" # demo only — use environment variables or a secrets manager in production
       client:
         registration:
-          keycloak:
+          talk-service:
             provider: keycloak
             client-id: private
-            client-secret: "knZMUYRIU3YC2CGZpyF8HiBdEfKzu1WD"
+            client-secret: "knZMUYRIU3YC2CGZpyF8HiBdEfKzu1WD" # demo only — use environment variables or a secrets manager in production
+            authorization-grant-type: urn:ietf:params:oauth:grant-type:token-exchange
+            scope:
+              - openid
+              - profile
+              - email
+          review-service:
+            provider: keycloak
+            client-id: private
+            client-secret: "knZMUYRIU3YC2CGZpyF8HiBdEfKzu1WD" # demo only — use environment variables or a secrets manager in production
             authorization-grant-type: urn:ietf:params:oauth:grant-type:token-exchange
             scope:
               - openid
