@@ -55,7 +55,7 @@ services:
       - "${OTEL_HTTP_PORT}:4318"
 
   lgtm:
-    image: "${GRAFANA_LGTM}"
+    image: "${GRAFANA_LGTM_IMAGE}"
     restart: "unless-stopped"
 
     depends_on:

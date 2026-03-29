@@ -83,7 +83,7 @@ async function main() {
 
     // 3. Public client — create or update
     const pub = clients.public;
-    const gw =clients.gateway;
+    const gw = clients.gateway;
     console.log(`\n3. Client: ${pub.clientId} (public, PKCE S256, lightweight tokens)`);
 
     const publicClientConfig = {
