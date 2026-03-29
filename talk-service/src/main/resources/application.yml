@@ -12,6 +12,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: "http://localhost/auth/realms/conference"
+          audiences: "talk-service"
 
 app:
   openapi:
