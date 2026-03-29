@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -32,13 +33,18 @@ public class JwtTokenConverter implements Converter<Jwt, JwtAuthenticationToken>
     }
 
     private Collection<GrantedAuthority> convertApplicationAuthorities(Jwt jwt) {
-        final var resourceAccessClaims = (Map<String, Object>) jwt.getClaim(REALM_ACCESS_CLAIM);
-        final var roles = (List<String>) resourceAccessClaims.get(ROLES);
+        final var realmAccessClaims = (Map<String, Object>) jwt.getClaim(REALM_ACCESS_CLAIM);
+        if (realmAccessClaims == null) {
+            return Collections.emptyList();
+        }
+        final var roles = (List<String>) realmAccessClaims.get(ROLES);
+        if (roles == null) {
+            return Collections.emptyList();
+        }
         return roles.stream()
                 .map(String::toUpperCase)
                 .map("ROLE_"::concat)
-                .map(SimpleGrantedAuthority::new)
-                .map(GrantedAuthority.class::cast)
+                .<GrantedAuthority>map(SimpleGrantedAuthority::new)
                 .toList();
     }
 
