@@ -13,14 +13,11 @@ const config: Config = {
         public: {
             clientId: "public",
         },
-        private: {
-            clientId: "private",
+        gateway: {
+            clientId: "gateway",
             secret: "knZMUYRIU3YC2CGZpyF8HiBdEfKzu1WD", // demo only — use environment variables or a secrets manager in production
         },
-        audienceTargets: [
-            {clientId: "talk-service", secret: "talkServiceSecret8x7K2mPq"}, // demo only — use environment variables or a secrets manager in production
-            {clientId: "review-service", secret: "reviewServiceSecret4nR9wLjY"}, // demo only — use environment variables or a secrets manager in production
-        ],
+        services: ["talk-service", "review-service"],
     },
 
     roles: ["speaker", "reviewer"],

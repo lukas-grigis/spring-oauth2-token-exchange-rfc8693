@@ -83,7 +83,7 @@ async function main() {
 
     // 3. Public client — create or update
     const pub = clients.public;
-    const priv = clients.private;
+    const gw =clients.gateway;
     console.log(`\n3. Client: ${pub.clientId} (public, PKCE S256, lightweight tokens)`);
 
     const publicClientConfig = {
@@ -108,14 +108,14 @@ async function main() {
     await kc.clients.update({id: pubUuid}, publicClientConfig);
     console.log(`   ${pub.clientId} — synced.`);
 
-    // Audience mapper: public → private (create or update)
-    const mapperName = `aud-${priv.clientId}`;
+    // Audience mapper: public → gateway (create or update)
+    const mapperName = `aud-${gw.clientId}`;
     const mapperConfig = {
         name: mapperName,
         protocol: "openid-connect" as const,
         protocolMapper: "oidc-audience-mapper",
         config: {
-            "included.client.audience": priv.clientId,
+            "included.client.audience": gw.clientId,
             "id.token.claim": "false",
             "lightweight.claim": "true",
             "introspection.token.claim": "true",
@@ -130,14 +130,14 @@ async function main() {
     }
     console.log(`   ${mapperName} — synced.`);
 
-    // 4. Private client — create or update
-    console.log(`\n4. Client: ${priv.clientId} (confidential, token exchange)`);
-    const privateClientConfig = {
-        clientId: priv.clientId,
+    // 4. Gateway client — create or update
+    console.log(`\n4. Client: ${gw.clientId} (confidential, token exchange)`);
+    const gatewayClientConfig = {
+        clientId: gw.clientId,
         enabled: true,
         publicClient: false,
         clientAuthenticatorType: "client-secret",
-        secret: priv.secret,
+        secret: gw.secret,
         standardFlowEnabled: true,
         directAccessGrantsEnabled: false,
         redirectUris: ["*"],
@@ -149,29 +149,61 @@ async function main() {
             "post.logout.redirect.uris": "+",
         },
     };
-    await ensureCreated(priv.clientId, () => kc.clients.create(privateClientConfig));
-    const [privFound] = await kc.clients.find({clientId: priv.clientId});
-    await kc.clients.update({id: privFound.id!}, privateClientConfig);
-    console.log(`   ${priv.clientId} — synced.`);
+    await ensureCreated(gw.clientId, () => kc.clients.create(gatewayClientConfig));
+    const [gwFound] = await kc.clients.find({clientId: gw.clientId});
+    await kc.clients.update({id: gwFound.id!}, gatewayClientConfig);
+    console.log(`   ${gw.clientId} — synced.`);
 
-    // 5. Audience target clients — create if missing
-    const audienceTargets = clients.audienceTargets;
-    console.log(`\n5. Audience targets: [${audienceTargets.map(t => t.clientId).join(", ")}]`);
-    for (const target of audienceTargets) {
-        const targetClientConfig = {
-            clientId: target.clientId,
-            enabled: true,
-            publicClient: false,
-            clientAuthenticatorType: "client-secret",
-            secret: target.secret,
-            standardFlowEnabled: false,
-            directAccessGrantsEnabled: false,
+    // 5. Audience scopes — one per downstream service, each with an audience mapper
+    const services = clients.services;
+    console.log(`\n5. Audience scopes: [${services.map(s => `api-${s}`).join(", ")}]`);
+    for (const service of services) {
+        const scopeName = `api-${service}`;
+        const scopeConfig = {
+            name: scopeName,
             protocol: "openid-connect" as const,
+            attributes: {
+                "include.in.token.scope": "false",
+                "display.on.consent.screen": "false",
+            },
         };
-        await ensureCreated(target.clientId, () => kc.clients.create(targetClientConfig));
-        const [found] = await kc.clients.find({clientId: target.clientId});
-        await kc.clients.update({id: found.id!}, targetClientConfig);
-        console.log(`   ${target.clientId} — synced.`);
+        await ensureCreated(scopeName, () => kc.clientScopes.create(scopeConfig));
+
+        const allScopes = await kc.clientScopes.find();
+        const scope = allScopes.find(s => s.name === scopeName);
+        if (scope) {
+            await kc.clientScopes.update({id: scope.id!}, scopeConfig);
+
+            // Audience mapper within this scope
+            const audMapperName = `${service}-audience`;
+            const audMapperConfig = {
+                name: audMapperName,
+                protocol: "openid-connect" as const,
+                protocolMapper: "oidc-audience-mapper",
+                config: {
+                    "included.custom.audience": service,
+                    "id.token.claim": "false",
+                    "access.token.claim": "true",
+                    "lightweight.claim": "true",
+                    "introspection.token.claim": "true",
+                },
+            };
+            await ensureCreated(audMapperName, () =>
+                kc.clientScopes.addProtocolMapper({id: scope.id!}, audMapperConfig));
+            const existingScopeMappers = await kc.clientScopes.listProtocolMappers({id: scope.id!});
+            const scopeMapper = existingScopeMappers.find(m => m.name === audMapperName);
+            if (scopeMapper) {
+                await kc.clientScopes.updateProtocolMapper(
+                    {id: scope.id!, mapperId: scopeMapper.id!},
+                    {...audMapperConfig, id: scopeMapper.id},
+                );
+            }
+
+            // Add as optional scope on gateway client
+            await kc.clients.addOptionalClientScope({id: gwFound.id!, clientScopeId: scope.id!})
+                .catch(() => { /* already assigned */ });
+            console.log(`   ${scopeName} — synced.`);
+        }
     }
 
     // 6. Users — create if missing, then sync roles
@@ -205,10 +237,10 @@ async function main() {
     // Summary
     console.log(`\n--- Done! ---`);
     console.log(`Realm:   ${realm}`);
-    console.log(`Public:  ${pub.clientId} (PKCE S256, lightweight, audience → ${priv.clientId})`);
-    console.log(`Private: ${priv.clientId} (secret: ${priv.secret}, token exchange enabled)`);
-    for (const target of audienceTargets) {
-        console.log(`Target:  ${target.clientId} (audience target for token exchange)`);
+    console.log(`Public:  ${pub.clientId} (PKCE S256, lightweight, audience → ${gw.clientId})`);
+    console.log(`Gateway: ${gw.clientId} (secret: ${gw.secret}, token exchange enabled)`);
+    for (const service of services) {
+        console.log(`Scope:   api-${service} → audience: ${service}`);
     }
     for (const u of users) {
         console.log(`User:    ${u.username} / ${u.password} → [${u.roles.join(", ")}]`);

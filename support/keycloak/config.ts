@@ -27,19 +27,13 @@ export const configSchema = z.object({
                     clientId: z.string().default("public"),
                 })
                 .default({}),
-            private: z
+            gateway: z
                 .object({
-                    clientId: z.string().default("private"),
+                    clientId: z.string().default("gateway"),
                     secret: z.string().default("knZMUYRIU3YC2CGZpyF8HiBdEfKzu1WD"),
                 })
                 .default({}),
-            audienceTargets: z.array(z.object({
-                clientId: z.string(),
-                secret: z.string(),
-            })).default([
-                {clientId: "talk-service", secret: "talkServiceSecret8x7K2mPq"},
-                {clientId: "review-service", secret: "reviewServiceSecret4nR9wLjY"},
-            ]),
+            services: z.array(z.string()).default(["talk-service", "review-service"]),
         })
         .default({}),
 
