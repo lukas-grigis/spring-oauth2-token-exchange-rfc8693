@@ -39,28 +39,30 @@ spring:
       resourceserver:
         opaquetoken:
           introspection-uri: "http://localhost/auth/realms/conference/protocol/openid-connect/token/introspect"
-          client-id: "private"
+          client-id: "gateway"
           client-secret: "knZMUYRIU3YC2CGZpyF8HiBdEfKzu1WD" # demo only — use environment variables or a secrets manager in production
       client:
         registration:
           talk-service:
             provider: keycloak
-            client-id: private
+            client-id: gateway
             client-secret: "knZMUYRIU3YC2CGZpyF8HiBdEfKzu1WD" # demo only — use environment variables or a secrets manager in production
             authorization-grant-type: urn:ietf:params:oauth:grant-type:token-exchange
             scope:
               - openid
               - profile
               - email
+              - api-talk-service
           review-service:
             provider: keycloak
-            client-id: private
+            client-id: gateway
             client-secret: "knZMUYRIU3YC2CGZpyF8HiBdEfKzu1WD" # demo only — use environment variables or a secrets manager in production
             authorization-grant-type: urn:ietf:params:oauth:grant-type:token-exchange
             scope:
               - openid
               - profile
               - email
+              - api-review-service
         provider:
           keycloak:
             issuer-uri: http://localhost/auth/realms/conference
