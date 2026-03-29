@@ -145,6 +145,13 @@ echo ""
 wait
 """
 
+# ─── Integration tests ───────────────────────────────────────────────
+
+[tasks."test:integration"]
+description = "Run integration tests against the live stack (requires mise run demo)"
+dir = "support/integration-test"
+run = "npm test"
+
 # ─── Frontends ───────────────────────────────────────────────────────
 
 [tasks."frontend:angular:install"]
