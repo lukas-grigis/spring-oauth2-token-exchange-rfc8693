@@ -13,6 +13,10 @@
   Log in, hit an endpoint, and watch the JWT morph between gateway and service.
 </p>
 
+<p align="center">
+  <a href="https://lukasgrigis.dev/blog/token-exchange-spring-cloud-gateway/"><strong>Read the companion blog post &rarr;</strong></a>
+</p>
+
 ---
 
 Most OAuth tutorials stop at "get a token, call an API." But real systems have gateways that sit between your frontend
