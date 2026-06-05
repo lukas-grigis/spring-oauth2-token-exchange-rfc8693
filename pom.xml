@@ -16,7 +16,7 @@
     <packaging>pom</packaging>
     <name>OAuth2.0 Token Exchange RFC8693</name>
     <description>Working demo of OAuth 2.0 Token Exchange (RFC 8693) with Spring Boot, Spring Cloud Gateway, and Keycloak</description>
-    <url>https://github.com/lukas-grigis/spring-oauth-token-exchange-rfc8693</url>
+    <url>https://github.com/lukas-grigis/spring-oauth2-token-exchange-rfc8693</url>
     <inceptionYear>2026</inceptionYear>
 
     <modules>

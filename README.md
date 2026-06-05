@@ -65,8 +65,8 @@ You need [Docker](https://docs.docker.com/get-docker/) and [mise](https://mise.j
 Maven, and Node versions automatically, so there's no manual setup.
 
 ```bash
-git clone https://github.com/lukas-grigis/spring-oauth-token-exchange-rfc8693.git
-cd spring-oauth-token-exchange-rfc8693
+git clone https://github.com/lukas-grigis/spring-oauth2-token-exchange-rfc8693.git
+cd spring-oauth2-token-exchange-rfc8693
 mise run demo
 ```
 
