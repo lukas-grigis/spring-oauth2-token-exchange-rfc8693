@@ -71,7 +71,7 @@ export class AuthService {
   private async updateTokenState(): Promise<void> {
     this.accessToken.set(this.keycloak.token ?? null);
 
-    // Lightweight tokens may lack profile claims — load from userinfo endpoint
+    // Lightweight tokens may lack profile claims — load from account endpoint
     if (this.keycloak.tokenParsed) {
       const parsed = this.keycloak.tokenParsed as UserInfo;
       if (!parsed.preferred_username) {
