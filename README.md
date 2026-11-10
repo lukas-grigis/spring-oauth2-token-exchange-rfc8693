@@ -105,7 +105,8 @@ The permission check endpoints return 204 (granted) or 403 (denied) based on rol
 Review Service. Bob is the opposite.
 
 If you want to see the full request path, open Grafana at http://grafana.localhost and search in Tempo. The trace goes
-from Traefik through the Gateway (including the token exchange call to Keycloak) into the downstream service.
+from the Gateway through Traefik to Keycloak (introspection, then the token exchange) and back through the Gateway into
+the downstream service.
 
 ## Tech stack
 
